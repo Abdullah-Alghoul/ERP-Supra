@@ -40,8 +40,8 @@ class perintah_kerja(osv.osv):
 		'note': '-',
 		'type': 'pabrikasi',
 		'state': 'draft',
-		'location_src_id': 12,
-		'location_dest_id': 12,
+		'location_src_id': 14,
+		'location_dest_id': 14,
 		'date': time.strftime('%Y-%m-%d'),
 		'kontrakdate': time.strftime('%Y-%m-%d'), 
 	}

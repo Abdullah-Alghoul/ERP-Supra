@@ -7,9 +7,9 @@
       <pageGraphics>
         <setFont name="Helvetica" size="10"/>
         <drawString x="19.0cm" y="1cm">Hal <pageNumber/></drawString>
-        <image x="1.5cm" y="26.4cm" height="60.0" >[[ company.logo or removeParentNode('image') ]]</image>
+        <image x="1.0cm" y="26.4cm" height="60.0" >[[ company.logo or removeParentNode('image') ]]</image>
         <setFont name="Arial" size="16"/>
-        <drawString x="8.8cm" y="27.6cm">PEMBELIAN BARANG</drawString>
+        <drawString x="8.1cm" y="27.6cm">PEMBELIAN BARANG</drawString>
         <setFont name="Helvetica" size="7"/>
       </pageGraphics>
     </header>
@@ -155,15 +155,93 @@
   
   
   <pto_header>
+
+  <para style="terp_default_Bold_88"><font color="white">. </font></para>
+  <para style="terp_default_Bold_88"><font color="white">. </font></para>
+  <para style="terp_default_Bold_88"><font color="white">. </font></para>
+  <para style="terp_default_Bold_88"><font color="white">. </font></para>
+    <blockTable colWidths="500.0" style="Table_Header_Pur_ord_Line_White">
+    <tr>
+    <td>
+    <para style="judul_no_pb">No.PB : [[ o.name ]]</para>
+    </td>
+    </tr>
+    </blockTable>
+    <para style="terp_tblheader_General"><font color="white">. </font></para>
+
+    <blockTable colWidths="600.0" style="Table_Header_Pur_ord_Line_White">
+    <tr>
+    <td>
+    <para style="terp_default_Bold_88"><font color="white">.</font>SBM-F-PCH-01/02</para>
+    <para style="terp_default_Bold_89"><font color="white">.......... </font>[[ time.strftime('%d/%m/%Y') ]]</para>
+    </td>
+    </tr>
+    </blockTable>
+    <blockTable colWidths="80.0,140.0,70.0,310.0" style="Header_Order_Reference_Tbl">
+    <tr>
+    <td>
+    <para style="terp_default_8"><b>Tanggal.</b></para>
+    </td>
+    <td>
+    <para style="terp_default_8"><b>[[ time.strftime('%d/%m/%Y', time.strptime(o.tanggal,'%Y-%m-%d')) ]]</b></para>
+    </td>
+    <td>
+    <para style="terp_default_8"><b>Proyek.</b></para>
+    </td>
+    <td>
+    <para style="terp_default_8"><b> [[ proyek(o) ]] </b></para>
+    </td>
+    </tr>
+    </blockTable>
+    <blockTable colWidths="80.0,140.0,70.0,70.0,100.0,140.0" style="Header_Order_Reference_Tbl">
+    <tr>
+    <td>
+    <para style="terp_default_8"><b>Dept./Seksi.</b></para>
+    </td>
+    <td>
+    <para style="terp_default_8"><b>[[ o.department_id.name ]]</b></para>
+    </td>
+    <td>
+    <para style="terp_default_8"><b>Due Date.</b></para>
+    </td>
+    <td>
+    <para style="terp_default_8"><b>[[ time.strftime('%d/%m/%Y', time.strptime(o.duedate,'%Y-%m-%d')) ]]</b></para>
+    </td>
+    <td>
+    <para style="terp_default_8"><b>SPK No/PO No.</b></para>
+    </td>
+    <td>
+    <para style="terp_default_8"><b>[[ o.spk_no ]]</b></para>
+    </td>
+    </tr>
+    </blockTable>
+
+    <para style="terp_tblheader_General"><font color="white">. </font></para>
+    <blockTable colWidths="35.0,305.0,60.0,55.0,50.0,95.0" style="Table001">
+    <tr>
+    <td> <para style="terp_default_Bold_Centre_8"><b>No</b> </para> </td>
+    <td> 
+    <para style="terp_default_Bold_Centre_8"><b>Deskripsi Barang</b></para>
+    <para style="terp_default_Bold_8_Italic"><b>(harus diisi lengkap,spt : merk, type, dimensi, warna dll.</b></para>
+
+    <para style="terp_default_Bold_8_Italic"><b>jika diperlukan bisa dengan sampel)</b></para>
+    </td>
+    <td> <para style="terp_default_Bold_Centre_8"><b>Part No</b></para> </td>
+    <td> <para style="terp_default_Bold_Centre_8"><b>Jumlah</b></para><para style="terp_default_Bold_Centre_8"><b>Diminta</b></para> </td>
+    <td> <para style="terp_default_Bold_Centre_8"><b>Sisa</b></para><para style="terp_default_Bold_Centre_8"><b>Stok</b></para> </td>
+    <td> <para style="terp_default_Bold_Centre_8"><b>Keterangan</b></para> </td>
+    </tr>
+    </blockTable>
+
   </pto_header>
-<para style="terp_default_Bold_88"><font color="white">. </font></para>
+
 <blockTable colWidths="500.0" style="Table_Header_Pur_ord_Line_White">
         <tr>
         <td>
         <para style="judul_no_pb">No.PB : [[ o.name ]]</para>
         </td>
         </tr>
-      </blockTable>
+ </blockTable>
         <para style="terp_tblheader_General"><font color="white">. </font></para>
       
    <blockTable colWidths="600.0" style="Table_Header_Pur_ord_Line_White">

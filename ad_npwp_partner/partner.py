@@ -44,8 +44,9 @@ class partner(osv.osv):
 			return super(partner, self).create(cr, uid, vals, context=context)
 		else:
 			if vals['is_company']==True:
-				if vals['npwp']=='11111111111111111111':
-					vals['npwp']=='11111111111111111111'
+				if 'npwp' in vals:
+					if vals['npwp']=='11111111111111111111':
+						vals['npwp']=='11111111111111111111'
 				else:
 					cek=self.pool.get('res.partner').search(cr,uid,[('npwp', '=' ,vals['npwp'])])
 					if cek:
@@ -56,9 +57,9 @@ class partner(osv.osv):
 		cek=self.pool.get('res.partner').search(cr,uid,[('id', '=' ,ids)])
 		user_id=self.pool.get('res.users').search(cr,uid,[('id', '=' ,uid)])
 		# Harus Administrator
-		if 'name' in vals:
-			if uid <> 1: # Yang merubah harus Administrator
-				raise osv.except_osv(('Warning..!!'), ('Please Contact Administrator To Change Customer Name ..'))	
+		# if 'name' in vals:
+			# if uid <> 1: # Yang merubah harus Administrator
+				# raise osv.except_osv(('Warning..!!'), ('Please Contact Administrator To Change Customer Name ..'))	
 
 		user_a =self.pool.get('res.partner').browse(cr,uid,user_id)
 		# user_name=self.pool.get('res.users').browse(cr,uid,[('id', '=' ,user_id)])
@@ -95,13 +96,14 @@ class partner(osv.osv):
 
 			if hasil['is_company']==True:
 				# NPWP di awal tidak ada, maka hasilnya False
-				if hasil['npwp']==False:
-					if vals['npwp']=='11111111111111111111':
-						vals['npwp']=='11111111111111111111'
-					else:
-						cek=self.pool.get('res.partner').search(cr,uid,[('npwp', '=' ,vals['npwp']),('is_company','=',True)])
-						if cek:
-							raise osv.except_osv(('Perhatian..!!'), ('No NPWP Unique ..'))
+				if 'npwp' in hasil:
+					if hasil['npwp']==False:
+						if vals['npwp']=='11111111111111111111':
+							vals['npwp']=='11111111111111111111'
+						else:
+							cek=self.pool.get('res.partner').search(cr,uid,[('npwp', '=' ,vals['npwp']),('is_company','=',True)])
+							if cek:
+								raise osv.except_osv(('Perhatian..!!'), ('No NPWP Unique ..'))
 				
 				# NPWP awal ada valuenya
 				else:

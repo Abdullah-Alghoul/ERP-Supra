@@ -303,6 +303,37 @@ class Purchase_Order(osv.osv):
 		'rev_counter':0,
 	}
 
+
+	def send_email_purchase_order(self, cr, uid, ids, Subject, email_to, html, context={}):
+		mail_mail = self.pool.get('mail.mail')
+		obj_usr = self.pool.get('res.users')
+		obj_partner = self.pool.get('res.partner')
+
+
+		cek_partner = obj_partner.search(cr,uid,[('email', '=' ,email_to)])
+		partner = obj_partner.browse(cr,uid,cek_partner)[0]
+
+		model = 'purchase.order'
+		res_id = ids
+		
+
+		if type(res_id) == type([]):
+			for val in res_id:
+				res_id = val
+
+
+		mail_id = mail_mail.create(cr, uid, {
+			'model': model,
+			'res_id': res_id,
+			'subject': Subject,
+			'body_html': html,
+			'auto_delete': True,
+			}, context={})
+
+		mail_mail.send(cr, uid, [mail_id], recipient_ids=[partner.id], context={})
+
+		return True
+
 	def create(self, cr, uid, vals, context={}):
 		order = super(Purchase_Order, self).create(cr, uid, vals, context=context)
 		return order
@@ -322,6 +353,28 @@ class Purchase_Order(osv.osv):
 		  </body>
 		</html>
 		""" % (user, no_po)
+		return res
+
+
+	def template_email_sequence(self, cr, uid, ids, before, after, selisih, context={}):
+		res = """\
+		<html>
+		  <head></head>
+		  <body>
+			<p>
+				Hi Administrator!<br><br>
+				Sequence Purchase Order Bermasalah<br>
+				<table border="1">
+					<tr><th># Before</th><th># After</th><<th>Selisih</th></tr>
+					<tr><th>%s</th><th>%s</th><th>%s Number</th></tr>
+				</table><br>
+			</p>
+			<br>
+			Best Regards,<br>
+			Administrator ERP
+		  </body>
+		</html>
+		""" % (before, after, selisih)
 		return res
 
 
@@ -353,6 +406,9 @@ class Purchase_Order(osv.osv):
 			po_no = time.strftime('%y')+seq_no+'/PO/SBM/'+rom[int(time.strftime('%m'))]+'/'+time.strftime('%y')
 			no = po_no
 
+			# Check Seq No Selisih
+			self.check_get_sequence(cr, uid, ids, context=None)
+
 		return no
 
 	def wkf_confirm_order(self, cr, uid, ids, context=None):
@@ -364,23 +420,52 @@ class Purchase_Order(osv.osv):
 			seq_no  = self.seq_purchase_order_no(cr, uid, ids, context=None)
 			self.write(cr, uid, ids, {'name': seq_no})
 			
-
-		# name = x_name.replace(" ","")[:6]
-		# cek = obj_po.search(cr ,uid, [('name','ilike',name)])
-
-		# for x in obj_po.browse(cr ,uid, cek):
-		# 	for i in ids:
-		# 		if i <> x.id:
-		# 			if name == x.name[:6]:
-		# 				if not val.po_revision_id:
-		# 					raise osv.except_osv(
-		# 							_('Information'),
-		# 							_('Order Reference must be unique per Company!'))
 		
 		
 		res = super(Purchase_Order, self).wkf_confirm_order(cr, uid, ids, context=None)
 		return True
 
+
+	def check_get_sequence(self, cr, uid, ids, context=None):
+		email = ['jay@beltcare.com','chandra@beltcare.com']
+
+		cr.execute("SELECT replace(substring(name,1,6), '/','') as name FROM purchase_order WHERE jenis ='loc' AND rev_counter=0 and name <> 'CANCEL' AND char_length(replace(substring(name,1,6), '/','')) = 6 AND char_length(name) > 10 ORDER BY replace(substring(name,1,6), '/','') DESC LIMIT 50",())
+		name = cr.fetchall()
+		po_name = [('id', 'in', map(lambda x: x[0], name))]
+
+		# Seq No Purchse Order
+		p  = self.pool.get('ir.model.data')
+		seqID = p.get_object(cr, uid, 'sbm_po_revise', 'seq_purchase_order_fix_bug').id
+		sequence = self.pool.get('ir.sequence').browse(cr, uid, seqID)
+
+		seq_no = int('17'+str(sequence.number_next_actual))
+		cek = False
+
+		for po in name:
+			if cek:
+				selisih = cek - int(po[0])
+				
+				if selisih > 4:
+					for mail in email:
+						subject = 'Informasi Sequence Purchase Order'
+						email_to= mail
+						template_email = self.template_email_sequence(cr, uid, ids, cek, int(po[0]), selisih, context={})
+						self.send_email_purchase_order(cr, uid, ids, subject, email_to, template_email, context=None)
+
+				cek = int(po[0])
+				
+			else:
+				selisih = seq_no - int(po[0])
+				if selisih > 4:
+					for mail in email:
+						subject = 'Informasi Sequence Purchase Order'
+						email_to= mail
+						template_email = self.template_email_sequence(cr, uid, ids, seq_no, int(po[0]), selisih, context={})
+						self.send_email_purchase_order(cr, uid, ids, subject, email_to, template_email, context=None)
+
+				cek = int(po[0])
+
+		return True
 
 	def proses_po_revision(self, cr, uid, ids, po_id_revision, context=None):
 		val = self.browse(cr, uid, ids, context={})[0]
@@ -585,6 +670,7 @@ class Purchase_Order_Revision(osv.osv):
 		</html>
 		""" % (user, no_po, url)
 		return res
+
 
 	def po_revision_state_cancel(self, cr, uid, ids, context={}):
 		res = self.write(cr,uid,ids,{'state':'cancel'},context=context)
