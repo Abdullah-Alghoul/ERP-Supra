@@ -13,48 +13,189 @@ class product_product(osv.osv):
 		'product_by_location': fields.one2many('stock.product.by.location','product_id'),
 	}
 
-	def name_get(self, cr, user, ids, context=None):
-		if context is None:
-			context = {}
-		if isinstance(ids, (int, long)):
-			ids = [ids]
-		if not len(ids):
-			return []
-		def _name_get(d):
-			name = d.get('name','')
-			code = d.get('default_code',False)
-			partner_code = d.get('partner_code','')
-			if code:
-				name = '[%s] %s' % (code, name)
-			if d.get('variants'):
-				name = name + ' - %s' % (d['variants'],)
-			return (d['id'], name)
+	def send_email_create(self, cr, uid, vals, subject, context=None):
+		mail_mail 	= self.pool.get('mail.mail')
+		obj_usr 	= self.pool.get('res.users')
+		obj_partner = self.pool.get('res.partner')
 
-		partner_id = context.get('partner_id', False)
+		username = obj_usr.browse(cr, uid, uid)
+		
+		ip_address = '192.168.9.26:10001'
+		db = 'LIVE_2017'
+		# url = 'http://'+ip_address+'/?db='+db+'#id=' +str(val.id)+'&view_type=form&model=product.product&action=113'
 
-		result = []
-		for product in self.browse(cr, user, ids, context=context):
-			sellers = filter(lambda x: x.name.id == partner_id, product.seller_ids)
-			if sellers:
-				for s in sellers:
-					mydict = {
-							  'id': product.id,
-							  'name': s.product_name or product.name,
-							  'default_code': s.product_code or product.default_code,
-							  'partner_code': s.partner_code or product.partner_code,
-							  'variants': product.variants
-							  }
-					result.append(_name_get(mydict))
-			else:
-				mydict = {
-						  'id': product.id,
-						  'name': product.name,
-						  'default_code': product.default_code,
-						  'partner_code': product.partner_code,
-						  'variants': product.variants
-						  }
-				result.append(_name_get(mydict))
-		return result
+		# Group warehouse Manager
+		p  = self.pool.get('ir.model.data')
+		warehouse_manager = p.get_object(cr, uid, 'stock', 'group_stock_manager').id
+		user_manager = self.pool.get('res.groups').browse(cr, uid, warehouse_manager)
+
+
+		Uom =self.pool.get('product.uom').browse(cr,uid,vals['uom_id'])
+
+		data_table = '<table border="1"><tr><th>Keterangan</th><th>Detail</th></tr>'
+		
+		data_table += '<tr><td>Part Number</td><td>'+ vals['default_code'] + '</td></tr>'
+		data_table += '<tr><td>Name</td><td>'+ vals['name'] + '</td></tr>'
+		data_table += '<tr><td>UOM</td><td>'+ Uom.name + '</td></tr>'
+		
+		data_table += '</table>'
+
+		for user in user_manager.users:
+			body = """\
+				<html>
+				  <head></head>
+				  <body>
+					<p>
+						Dear %s!<br/><br/>
+						%s Telah Membuat Product Baru Dengan Detail : <br/>
+						<br/>
+						%s
+					</p>
+					<br/>
+					Best Regards,<br/>
+					Administrator ERP
+				  </body>
+				</html>
+				""" % (user.name, username.name, data_table)
+
+			mail_id = mail_mail.create(cr, uid, {
+				'model': 'product.product',
+				'res_id': user.id,
+				'subject': subject,
+				'body_html': body,
+				'auto_delete': True,
+				}, context=context)
+
+			mail_mail.send(cr, uid, [mail_id], recipient_ids=[user.partner_id.id], context=context)
+
+		return True
+
+
+	def create(self, cr, uid, vals, context=None):
+
+		subject = 'Create New Product'
+
+		self.send_email_create(cr, uid, vals, subject, context=None)
+
+		return super(product_product, self).create(cr, uid, vals, context=context)
+
+	def send_email_update(self, cr, uid, ids, vals, subject, context=None):
+		val 		= self.browse(cr, uid, ids)[0]
+		mail_mail 	= self.pool.get('mail.mail')
+		obj_usr 	= self.pool.get('res.users')
+		obj_partner = self.pool.get('res.partner')
+
+		username = obj_usr.browse(cr, uid, uid)
+		
+		ip_address = '192.168.9.26:10001'
+		db = 'LIVE_2017'
+		url = 'http://'+ip_address+'/?db='+db+'#id=' +str(val.id)+'&view_type=form&model=product.product&action=113'
+
+		Product =self.pool.get('product.product').browse(cr,uid,val.id)
+
+		# Group warehouse Manager
+		p  = self.pool.get('ir.model.data')
+		warehouse_manager = p.get_object(cr, uid, 'stock', 'group_stock_manager').id
+		user_manager = self.pool.get('res.groups').browse(cr, uid, warehouse_manager)
+
+		data_table = '<table border="1"><tr><th>Keterangan</th><th>Sebelum</th><th>Sesudah</th></tr>'
+		
+		if 'categ_id' in vals:	
+			data_table += '<tr><td>Category Product</td><td>'+ Product.categ_id.name + '</td><td>'+ vals['categ_id'].name + '</td></tr>'
+
+		if 'default_code' in vals:
+			data_table += '<tr><td>Part Number</td><td>'+ Product.default_code + '</td><td>'+ vals['default_code'] + '</td></tr>'
+
+		if 'name' in vals:
+			data_table += '<tr><td>Name</td><td>'+ Product.name + '</td><td>'+ vals['name'] + '</td></tr>'
+
+		if 'uom_id' in vals:
+			Uom =self.pool.get('product.uom').browse(cr,uid,vals['uom_id'])
+			data_table += '<tr><td>UOM</td><td>'+ Product.uom_id.name + '</td><td>'+ Uom.name + '</td></tr>'
+		
+		data_table += '</table>'
+
+		for user in user_manager.users:
+			body = """\
+				<html>
+				  <head></head>
+				  <body>
+					<p>
+						Dear %s!<br/><br/>
+						%s Telah Update Product Baru Dengan Detail : <br/>
+						<br/>
+						%s
+					</p>
+					<br/>
+					Best Regards,<br/>
+					Administrator ERP
+				  </body>
+				</html>
+				""" % (user.name, username.name, data_table)
+
+			mail_id = mail_mail.create(cr, uid, {
+				'model': 'product.product',
+				'res_id': val.id,
+				'subject': subject,
+				'body_html': body,
+				'auto_delete': True,
+				}, context=context)
+
+			mail_mail.send(cr, uid, [mail_id], recipient_ids=[user.partner_id.id], context=context)
+
+		return True
+
+	def write(self,cr,uid,ids,vals,context={}):
+
+		subject = 'Update Product'
+
+		self.send_email_update(cr, uid, ids, vals, subject, context=None)
+
+		return super(product_product, self).write(cr, uid, ids, vals, context=context)
+
+
+	# def name_get(self, cr, user, ids, context=None):
+	# 	if context is None:
+	# 		context = {}
+	# 	if isinstance(ids, (int, long)):
+	# 		ids = [ids]
+	# 	if not len(ids):
+	# 		return []
+	# 	def _name_get(d):
+	# 		name = d.get('name','')
+	# 		code = d.get('default_code',False)
+	# 		partner_code = d.get('partner_code','')
+	# 		if code:
+	# 			name = '[%s] %s' % (code, name)
+	# 		if d.get('variants'):
+	# 			name = name + ' - %s' % (d['variants'],)
+	# 		return (d['id'], name)
+
+	# 	partner_id = context.get('partner_id', False)
+
+	# 	result = []
+	# 	for product in self.browse(cr, user, ids, context=context):
+	# 		sellers = filter(lambda x: x.name.id == partner_id, product.seller_ids)
+	# 		if sellers:
+	# 			for s in sellers:
+	# 				mydict = {
+	# 						  'id': product.id,
+	# 						  'name': s.product_name or product.name,
+	# 						  'default_code': s.product_code or product.default_code,
+	# 						  'partner_code': s.partner_code or product.partner_code,
+	# 						  'variants': product.variants
+	# 						  }
+	# 				result.append(_name_get(mydict))
+	# 		else:
+	# 			mydict = {
+	# 					  'id': product.id,
+	# 					  'name': product.name,
+	# 					  'default_code': product.default_code,
+	# 					  'partner_code': product.partner_code,
+	# 					  'variants': product.variants
+	# 					  }
+	# 			result.append(_name_get(mydict))
+	# 	return result
 
 	def name_search(self, cr, user, name='', args=None, operator='ilike', context=None, limit=100):
 		if not args:
