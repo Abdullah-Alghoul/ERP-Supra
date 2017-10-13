@@ -90,7 +90,8 @@ class product_product(osv.osv):
 		data_table = '<table border="1"><tr><th>Keterangan</th><th>Sebelum</th><th>Sesudah</th></tr>'
 		
 		if 'categ_id' in vals:	
-			data_table += '<tr><td>Category Product</td><td>'+ Product.categ_id.name + '</td><td>'+ vals['categ_id'].name + '</td></tr>'
+			Category =self.pool.get('product.category').browse(cr,uid,vals['categ_id'])
+			data_table += '<tr><td>Category Product</td><td>'+ Product.categ_id.name + '</td><td>'+ Category.name + '</td></tr>'
 
 		if 'default_code' in vals:
 			data_table += '<tr><td>Part Number</td><td>'+ Product.default_code + '</td><td>'+ vals['default_code'] + '</td></tr>'
@@ -104,6 +105,8 @@ class product_product(osv.osv):
 		
 		data_table += '</table>'
 
+		print '=============',data_table
+		
 		for user in user_manager.users:
 			body = """\
 				<html>
