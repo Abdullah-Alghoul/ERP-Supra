@@ -563,7 +563,28 @@ class Purchase_Order(osv.osv):
 
 			# Done Purchase Order Revision
 			obj_po_revision.write(cr,uid,val.po_revision_id.id,{'state':'done'})
+		else:
+			# Double Cek Purchase Order Revision
+			cek = obj_po_revision.search(cr,uid,[('new_po', '=' ,ids)])
 
+			if cek:
+				dataRevise = obj_po_revision.browse(cr,uid,cek[0])
+
+				if dataRevise.state != 'cancel':
+					self.proses_po_revision(cr, uid, ids, dataRevise.id, context=None)
+
+					# Cancel Purchase Order
+					cancel_po = self.action_cancel(cr, uid, [dataRevise.po_source.id], context=None)
+
+					msg = _("Revision Version Confirmed @ " + val.name)
+					obj_po.message_post(cr, uid, [dataRevise.po_source.id], body=msg, context=context)
+
+					if dataRevise.po_source.state != 'cancel':
+						self.cancel_purchase_order(cr, uid, [dataRevise.po_source.id], context=None)
+
+					# Done Purchase Order Revision
+					obj_po_revision.write(cr,uid,dataRevise.id,{'state':'done'})			
+		
 		return res
 
 	def cancel_purchase_order(self, cr, uid, ids, context=None):
