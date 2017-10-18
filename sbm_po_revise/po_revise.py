@@ -1132,6 +1132,12 @@ class WizardPOrevise(osv.osv_memory):
 		id_group_chief = p.get_object(cr, uid, 'sbm_purchase', 'group_purchase_chief').id
 		user_group_chief = self.pool.get('res.groups').browse(cr, uid, id_group_chief)
 
+		# Group Warehouse Manager
+		w  = self.pool.get('ir.model.data')
+		id_group_warehouse_manager = w.get_object(cr, uid, 'stock', 'group_stock_manager').id
+		user_group_warehouse_manager = self.pool.get('res.groups').browse(cr, uid, id_group_warehouse_manager)
+
+
 
 		# Group Finance Manager
 		p  = self.pool.get('ir.model.data')
@@ -1176,6 +1182,16 @@ class WizardPOrevise(osv.osv_memory):
 		else:
 			# Send Email Purchase Manager
 			for x in user_group.users:
+				if x.email:
+					subject = 'On Ask For Revision Purchase Order ' + po_name
+					email_to= x.email
+
+					template_email = self.template_email_create(cr, uid, ids, x.name, user_create, po_name, notes, url, inv, bnk_statment, status=False, context={})
+					obj_po_revision.send_email(cr, uid, ids, subject, email_to, url, template_email, context={})
+
+
+			# Send Email Purchase Manager
+			for x in user_finance_manager.users:
 				if x.email:
 					subject = 'On Ask For Revision Purchase Order ' + po_name
 					email_to= x.email
