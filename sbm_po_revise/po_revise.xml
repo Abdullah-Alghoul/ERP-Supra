@@ -314,6 +314,7 @@
 				green:(date_planned == date_now) and received_items &lt; product_qty); 
 				black:(state == 'done');black:(product_qty == received_items)">
 				<field name="order_id"/>
+				<field name="origin"/>
 				<field name="product_id"/>
 				<field name="name"/>
 				<field name="part_number"/>

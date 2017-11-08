@@ -152,6 +152,7 @@ class Purchase_Order_Line(osv.osv):
 		'qty_status_overdue':fields.function(_func_qty_status_overdue, fnct_search=_func_search_qty_status_overdue, string='Qty Status Overdue',type='boolean'),
 		'qty_status_todo':fields.function(_func_qty_status_todo, fnct_search=_func_search_qty_status_todo, string='Qty Status Todo',type='boolean'),
 		'following_po':fields.function(_func_following_po, fnct_search=_func_search_following_po, string='Following PO',type='boolean'),
+		'origin': fields.related('order_id','origin', type='char', string='Origin'),
 	}
 
 Purchase_Order_Line()
